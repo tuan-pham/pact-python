@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import fnmatch
+import json
 import os
 import platform
 from subprocess import Popen
@@ -12,8 +13,10 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
 
 from .constants import BROKER_CLIENT_PATH
+from .constants import MESSAGE_PATH
 from .constants import MOCK_SERVICE_PATH
 from .matchers import from_term
+from .message import Message
 
 
 class Pact(object):
@@ -131,6 +134,8 @@ class Pact(object):
         self.sslkey = sslkey
         self.version = version
         self._interactions = []
+        self._message_interactions = []
+        self._message_process = None
         self._process = None
 
     def given(self, provider_state):
@@ -204,12 +209,13 @@ class Pact(object):
                 self.uri + '/interactions', headers=self.HEADERS, verify=False)
 
             assert resp.status_code == 200, resp.text
+            print("********** uri: {}".format(self.uri))
             resp = requests.put(
                 self.uri + '/interactions',
                 headers=self.HEADERS,
                 verify=False,
                 json={"interactions": self._interactions})
-
+            print("****** interactions: {}".format(self._interactions))
             assert resp.status_code == 200, resp.text
         except AssertionError:
             raise
@@ -295,6 +301,30 @@ class Pact(object):
             self.uri + '/pact', headers=self.HEADERS, verify=False)
         assert resp.status_code == 200, resp.text
 
+    def verify_message(self, handler):
+
+        for x in self._message_interactions:
+            command = [
+                MESSAGE_PATH,
+                'update',
+                json.dumps(x._messages[0]),
+                '--pact-dir', self.pact_dir,
+                '--pact-specification-version={}'.format(self.version),
+                '--consumer', self.consumer.name + "_message",
+                '--provider', self.provider.name + "_message"]
+
+            print("********* command: {}".format(command))
+
+            self._message_process = Popen(command)
+
+    def add_message(self):
+
+        message = Message()
+
+        self._message_interactions.append(message)
+
+        return message
+
     def with_request(self, method, path, body=None, headers=None, query=None):
         """
         Define the request that the client is expected to perform.
@@ -379,6 +409,7 @@ class Pact(object):
 
         Sets up the mock service to expect the client requests.
         """
+        print("******** __enter__")
         self.setup()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -390,7 +421,7 @@ class Pact(object):
         """
         if (exc_type, exc_val, exc_tb) != (None, None, None):
             return
-
+        print("******** __exit___")
         self.verify()
 
 
