@@ -216,6 +216,7 @@ class Pact(object):
                 verify=False,
                 json={"interactions": self._interactions})
             print("****** interactions: {}".format(self._interactions))
+            print("****** MESSAGE interactions: {}".format(self._message_interactions))
             assert resp.status_code == 200, resp.text
         except AssertionError:
             raise

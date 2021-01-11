@@ -36,6 +36,7 @@ class PactTestCase(TestCase):
         self.assertEqual(target.uri, 'http://localhost:1234')
         self.assertEqual(target.version, '2.0.0')
         self.assertEqual(len(target._interactions), 0)
+        self.assertEqual(len(target._message_interactions), 0)
 
     def test_init_custom_mock_service(self):
         target = Pact(
@@ -58,6 +59,7 @@ class PactTestCase(TestCase):
         self.assertEqual(target.version, '3.0.0')
         self.assertEqual(target.file_write_mode, 'merge')
         self.assertEqual(len(target._interactions), 0)
+        self.assertEqual(len(target._message_interactions), 0)
 
     def test_init_publish_to_broker(self):
         target = Pact(
@@ -647,6 +649,8 @@ class PactVerifyTestCase(PactTestCase):
         self.mock_requests.assert_has_calls([
             self.get_verification_call])
 
+    def test_verify_message(self):
+        pass
     def test_error_writing_pacts_to_file(self):
         self.mock_requests.side_effect = iter([
             Mock(status_code=200),

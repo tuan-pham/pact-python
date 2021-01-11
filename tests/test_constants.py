@@ -35,6 +35,21 @@ class mock_service_exeTestCase(TestCase):
         self.assertEqual(constants.mock_service_exe(), 'pact-mock-service.bat')
 
 
+class MessageExeTestCase(TestCase):
+    def setUp(self):
+        super(MessageExeTestCase, self).setUp()
+        self.addCleanup(patch.stopall)
+        self.mock_os = patch.object(constants, 'os', autospec=True).start()
+
+    def test_other(self):
+        self.mock_os.name = 'posix'
+        self.assertEqual(constants.message_exe(), 'pact-message')
+
+    def test_windows(self):
+        self.mock_os.name = 'nt'
+        self.assertEqual(constants.message_exe(), 'pact-message.bat')
+
+
 class provider_verifier_exeTestCase(TestCase):
     def setUp(self):
         super(provider_verifier_exeTestCase, self).setUp()
